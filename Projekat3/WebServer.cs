@@ -74,8 +74,15 @@ namespace Projekat3
                 if (!validation.Equals("OK"))
                 {
                     WriteToConsole(validation);
+                    SendResponse(response, requestNumber, validation);
                     return;
                 }
+
+
+                //SendResponse(response, requestNumber, "OK");
+
+                
+
                 
             }
             catch(Exception e)
@@ -83,6 +90,33 @@ namespace Projekat3
                 WriteToConsole(e.Message);
             }
            
+        }
+
+        private async Task SendResponse(HttpListenerResponse response, int responseId, string responseString)
+        {
+            try
+            {
+                byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+                if(responseString.Equals("OK"))
+                {
+                    response.StatusCode = 200;
+                    response.StatusDescription = "OK";
+                }
+                else
+                {
+                    response.StatusCode = 400;
+                    response.StatusDescription = "Bad request";
+                }
+                response.ContentLength64 = buffer.Length;
+                System.IO.Stream output = response.OutputStream;
+                await output.WriteAsync(buffer, 0, buffer.Length);
+                output.Close();
+                logResponse(response, responseId);
+            }
+            catch(Exception e)
+            {
+                WriteToConsole(e.Message);
+            }
         }
         private string ValidateRequest(HttpListenerContext context)
         {
