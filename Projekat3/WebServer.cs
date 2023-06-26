@@ -14,14 +14,27 @@ namespace Projekat3
         private string _urlApi;
         private object _lockConsole = new object();
         private int _requestCount = 0;
+        private string _clientId = "";
+        private string _clientSecret = "";
+        private string _accessToken = "";
+        private RedditAuth _redditAuth;
+
         public WebServer(string urlServer, string urlApi)
         {
             _urlServer = urlServer;
             _urlApi = urlApi;
+            _redditAuth = new RedditAuth(_urlApi, _urlServer);
         }
         public async Task Run()
         {
             Console.WriteLine("WebServer started.");
+            _accessToken= await _redditAuth.GetAccessToken();
+            if(_accessToken == null)
+                throw new Exception("Access token is null!");
+            else
+                Console.WriteLine("Access token here!");
+            //Console.WriteLine("Access token: " + _accessToken);
+
             Thread server = new Thread(async ()=>
             {
                 using (HttpListener listener = new HttpListener())
@@ -34,7 +47,7 @@ namespace Projekat3
                     while (listener.IsListening)
                     {
                         HttpListenerContext context = await listener.GetContextAsync();
-                        _= ProcessRequestAsync(context);
+                        _= ProcessRequestAsync(context,_requestCount++);
                         //string responseString = "<HTML><BODY> Hello world!</BODY></HTML>";
                         //byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
                         //response.ContentLength64 = buffer.Length;
@@ -47,7 +60,7 @@ namespace Projekat3
             server.Start();
             server.Join();
         }
-        private async Task ProcessRequestAsync(HttpListenerContext con)
+        private async Task ProcessRequestAsync(HttpListenerContext con,int requestNumber)
         {
             try
             {
@@ -56,36 +69,54 @@ namespace Projekat3
                     throw new Exception("Can't parse given object to HttpListenerContext object!");
                 HttpListenerRequest request = context.Request;
                 HttpListenerResponse response = context.Response;
+                logRequest(request, requestNumber);
+                string validation = ValidateRequest(context);
+                if (!validation.Equals("OK"))
+                {
+                    WriteToConsole(validation);
+                    return;
+                }
+                
             }
             catch(Exception e)
             {
                 WriteToConsole(e.Message);
-                WriteBreakLine();
             }
            
         }
-        private void logRequest(HttpListenerRequest request)
+        private string ValidateRequest(HttpListenerContext context)
         {
-            _requestCount++;
-            WriteToConsole("Request number: " + _requestCount);
-            WriteToConsole("Request URL: " + request.Url.ToString());
-            WriteToConsole("Request HTTP method: " + request.HttpMethod);
-            WriteToConsole("Request IP-adress: " + request.RemoteEndPoint.Address.ToString());
-            WriteToConsole("Request User-agent: " + request.UserAgent);
-            WriteToConsole("Request Content-type: " + request.ContentType);
-            WriteToConsole("Request Content-length: " + request.ContentLength64);
-            WriteToConsole("Request Accept-encoding: " + request.Headers["Accept-encoding"]);
-            WriteToConsole("Request Accept-language: " + request.Headers["Accept-language"]);
-            WriteToConsole("Request Accept: " + request.Headers["Accept"]);
-            WriteToConsole("Request Host: " + request.Headers["Host"]);
-            WriteToConsole("Request Connection: " + request.Headers["Connection"]);
-            WriteToConsole("Request Cache-control: " + request.Headers["Cache-control"]);
-            WriteToConsole("Request Cookie: " + request.Headers["Cookie"]);
-            WriteToConsole("Request Referer: " + request.Headers["Referer"]);
-            WriteToConsole("Request Accept-charset: " + request.Headers["Accept-charset"]);
-            WriteToConsole("Request Accept-encoding: " + request.Headers["Accept-encoding"]);
-            WriteBreakLine();
-
+            if (!context.Request.HttpMethod.Equals("GET"))
+                return "METHOD IS NOT GET";
+            return "OK";
+        }
+        private void logRequest(HttpListenerRequest request, int requestId)
+        {
+            lock(_lockConsole)
+            {
+                Console.WriteLine("Request number: " + requestId);
+                Console.WriteLine("Request URL: " + request.Url.ToString());
+                Console.WriteLine("Request HTTP method: " + request.HttpMethod);
+                Console.WriteLine("Request User-agent: " + request.UserAgent);
+                Console.WriteLine("Request Content-type: " + request.ContentType);
+                Console.WriteLine("Request Content-length: " + request.ContentLength64);
+                Console.WriteLine("Request Accept-encoding: " + request.Headers["Accept-encoding"]);
+                Console.WriteLine("Request Accept-language: " + request.Headers["Accept-language"]);
+                Console.WriteLine("----------------------------------------------------");
+            }
+        }
+        private void logResponse(HttpListenerResponse response,int responseId)
+        {
+            lock (_lockConsole)
+            {
+                Console.WriteLine("Response number: " + responseId);
+                Console.WriteLine("Response status code: " + response.StatusCode);
+                Console.WriteLine("Response status description: " + response.StatusDescription);
+                Console.WriteLine("Response Content-type: " + response.ContentType);
+                Console.WriteLine("Response Content-length: " + response.ContentLength64);
+                Console.WriteLine("Response Content-encoding: " + response.ContentEncoding);
+                Console.WriteLine("----------------------------------------------------");
+            }
         }
         private void WriteToConsole(string message)
         {
