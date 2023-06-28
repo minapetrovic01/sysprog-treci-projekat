@@ -85,7 +85,7 @@ namespace Projekat3
                 for(int i = 0; i < subsInRquest.Count; i++)
                 {
                     RedditClient redditClient = new RedditClient(appId: RedditAuth._clientId,accessToken:_accessToken);
-                    subreddits[i] = new Subreddit(subsInRquest[i], redditClient);
+                    subreddits[i] = new Subreddit(subsInRquest[i], redditClient,_lockConsole);
                 }
 
                 IDisposable[] disposables= new IDisposable[subreddits.Length];
@@ -98,11 +98,11 @@ namespace Projekat3
                     await articlesStream.GetArticles(subreddits[i]._title);
                 }
 
-                while(!result.created)
+                while (!result.created)
                 {
-                    await Task.Delay(100);
+                  
                 }
-                
+
                 subscription.Dispose();
                 for(int i = 0; i < disposables.Length; i++)
                 {
@@ -128,6 +128,7 @@ namespace Projekat3
             foreach(string sub in subsInRequest)
             {
                 subs.Add(sub);
+                //Console.WriteLine("Subreddit: " + sub);
             }
             return subs;
         }

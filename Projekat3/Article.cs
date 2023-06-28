@@ -47,15 +47,15 @@ namespace Projekat3
                     var response = await client.GetAsync("https://oauth.reddit.com/r/" + subreddit + "/new.json");
                     var responseContent = await response.Content.ReadAsStringAsync();
 
-                    JObject json = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
-                    JArray posts = (JArray)json["data"]["children"];
+                    JObject jsony = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
+                    JArray posts = (JArray)jsony["data"]!["children"]!;
 
                     foreach (var post in posts)
                     {
-                        JObject data = (JObject)post["data"];
-                        if (data["name"].ToString() != "")
+                        JObject data = (JObject)post["data"]!;
+                        if (data["name"]!.ToString() != "")
                         {
-                            _subject.OnNext(data["name"].ToString());
+                            _subject.OnNext(data["name"]!.ToString());
                         }
                     }
                 }
