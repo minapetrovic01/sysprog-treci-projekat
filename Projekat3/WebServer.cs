@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Reddit;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reactive.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -68,15 +70,46 @@ namespace Projekat3
                 if (!validation.Equals("OK"))
                 {
                     WriteToConsole(validation);
-                    SendResponse(response, requestNumber, validation);
+                    SendResponse(response, requestNumber, validation,validation);
                     return;
                 }
+                List<string> subsInRquest = GetSubreddits(request);
+                Result result = new Result();
+                if(subsInRquest.Count == 0)
+                {
+                    result.SetContent("No subreddits in request!");
+                    SendResponse(response, requestNumber, "",result.content);
+                    return;
+                }
+                Subreddit[] subreddits = new Subreddit[subsInRquest.Count];
+                for(int i = 0; i < subsInRquest.Count; i++)
+                {
+                    RedditClient redditClient = new RedditClient(appId: RedditAuth._clientId,accessToken:_accessToken);
+                    subreddits[i] = new Subreddit(subsInRquest[i], redditClient);
+                }
 
+                IDisposable[] disposables= new IDisposable[subreddits.Length];
+                Article articlesStream= new Article(_accessToken);
+                var observeResult=Observable.Merge(subreddits);
+                var subscription = observeResult.Subscribe(result);
+                for(int i = 0; i < subreddits.Length; i++)
+                {
+                    disposables[i] = articlesStream.Subscribe(subreddits[i]);
+                    await articlesStream.GetArticles(subreddits[i]._title);
+                }
 
+                while(!result.created)
+                {
+                    await Task.Delay(100);
+                }
+                
+                subscription.Dispose();
+                for(int i = 0; i < disposables.Length; i++)
+                {
+                    disposables[i].Dispose();
+                }
 
-
-
-                //SendResponse(response, requestNumber, "OK");
+                SendResponse(response, requestNumber, "OK",result.content);
 
             }
             catch(Exception e)
@@ -86,11 +119,24 @@ namespace Projekat3
            
         }
 
-        private async Task SendResponse(HttpListenerResponse response, int responseId, string responseString)
+        private List<string> GetSubreddits(HttpListenerRequest req)
+        {
+           List<string> subs= new List<string>();
+            string[] subsInRequest = req.QueryString.GetValues("subreddit");
+            if (subsInRequest == null)
+                return subs;
+            foreach(string sub in subsInRequest)
+            {
+                subs.Add(sub);
+            }
+            return subs;
+        }
+
+        private async Task SendResponse(HttpListenerResponse response, int responseId, string responseString,string txt)
         {
             try
             {
-                byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+                byte[] buffer = System.Text.Encoding.UTF8.GetBytes(txt);
                 if(responseString.Equals("OK"))
                 {
                     response.StatusCode = 200;

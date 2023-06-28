@@ -10,7 +10,7 @@ namespace Projekat3
      class RedditAuth
     {
         private string _urlAPI;
-        private string _clientId= "XtcZ6zRp1EJNN4HDHsTjHQ";
+        public static string _clientId= "XtcZ6zRp1EJNN4HDHsTjHQ";
         private string _clientSecret= "Gx5fy3spXiNS2W_pCCe2h_LuFBok5w";
         private string _redirectUri;
 

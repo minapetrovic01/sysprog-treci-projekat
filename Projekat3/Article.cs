@@ -15,7 +15,7 @@ namespace Projekat3
     {
         private ISubject<string> _subject;
         private string _accessToken;
-        private IScheduler _scheduler;
+        private readonly IScheduler _scheduler;
 
         public Article(string accessToken)
         {
@@ -31,7 +31,7 @@ namespace Projekat3
         {
             _accessToken = accessToken;
         }
-        public async Task GetArticle(string subreddit)
+        public async Task GetArticles(string subreddit)
         {
             try
             {
