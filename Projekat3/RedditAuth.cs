@@ -15,7 +15,6 @@ namespace Projekat3
         private string _redirectUri;
 
         private string _accessToken;
-        private string _refreshToken;
         private string _tokenType;
         private string _scope;
 

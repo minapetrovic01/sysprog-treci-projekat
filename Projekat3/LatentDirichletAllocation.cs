@@ -23,10 +23,6 @@ namespace Projekat3
         private static int count = 0;
         public static PredictionEngine<TextData, TransformedTextData> PredictionEngine { get; set; }
 
-        public LatentDirichletAllocation()
-        {
-          // _comments = new ConcurrentBag<string>();
-        }
         public static void ProccessData(ConcurrentBag<string> coms)
         {
             _comments.Clear();
@@ -34,7 +30,6 @@ namespace Projekat3
             count= _comments.Count;
           
         }
-
         public static void RunAnalysis(int topicNum)
         {
             var mlContext = new MLContext();
@@ -58,20 +53,10 @@ namespace Projekat3
                     "Features", "Tokens", numberOfTopics: topicNum));
 
             var transformer = pipeline.Fit(dataview);
-
             
             var predictionEngine = mlContext.Model.CreatePredictionEngine<TextData,
                 TransformedTextData>(transformer);
             PredictionEngine = predictionEngine;
-
-            //PrintLdaFeatures(predictionEngine.Predict(samples[0]));
-            //PrintLdaFeatures(predictionEngine.Predict(samples[1]));
-            //string result = "";
-            //foreach(var sample in samples)
-            //{
-            //    result+=PrintLdaFeatures(predictionEngine.Predict(sample));
-            //}
-            //return result;
         }
         public static string GetPrediction(string text)
         {

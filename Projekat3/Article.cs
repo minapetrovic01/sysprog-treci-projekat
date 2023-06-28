@@ -46,8 +46,16 @@ namespace Projekat3
                     client.DefaultRequestHeaders.Add("User-Agent", "C# console program");
                     var response = await client.GetAsync("https://oauth.reddit.com/r/" + subreddit + "/new.json");
                     var responseContent = await response.Content.ReadAsStringAsync();
+                    if(responseContent == null)
+                    {
+                        throw new Exception("No results found");
+                    }
 
                     JObject jsony = Newtonsoft.Json.Linq.JObject.Parse(responseContent);
+                    if(jsony==null)
+                    {
+                       throw new Exception("No results found");
+                    }
                     JArray posts = (JArray)jsony["data"]!["children"]!;
 
                     foreach (var post in posts)

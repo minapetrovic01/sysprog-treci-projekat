@@ -20,11 +20,12 @@ namespace Projekat3
         private RedditClient _redditClient;
         public string _title;
         private object _lock = new object();
-        private bool _postsGeathered=false;
+        private bool _postsGeathered = false;
         private ConcurrentBag<Task> _tasks = new ConcurrentBag<Task>();
         private ConcurrentBag<string> _comments = new ConcurrentBag<string>();
+        private object _lockAlgo = new object();
 
-        public Subreddit(string title,RedditClient client, object locky)
+        public Subreddit(string title, RedditClient client, object locky)
         {
             _subject = new Subject<string>();
             _scheduler = new EventLoopScheduler();
@@ -35,7 +36,7 @@ namespace Projekat3
 
         public void OnCompleted()
         {
-            lock(_lock)
+            lock (_lock)
             {
                 Console.WriteLine($"--------------{_title} SUBREDDIT----------------------\n");
             }
@@ -45,19 +46,28 @@ namespace Projekat3
 
         private void DoTopicModeling()
         {
-            Console.WriteLine($"Topic modeling for {_title} subreddit\n");
-            ///LatentDirichletAllocation lda = new LatentDirichletAllocation();
-            LatentDirichletAllocation.ProccessData(_comments);
-            LatentDirichletAllocation.RunAnalysis(3);
-
-            foreach (var comment in _comments)
+            try
             {
-                //Console.WriteLine(comment);
-                string topic = LatentDirichletAllocation.GetPrediction(comment);
-                _subject.OnNext(topic);
+                Console.WriteLine($"Topic modeling for {_title} subreddit\n");
+                LatentDirichletAllocation.ProccessData(_comments);
+                LatentDirichletAllocation.RunAnalysis(4);
 
+                foreach (var comment in _comments)
+                {
+                    string topic = LatentDirichletAllocation.GetPrediction(comment);
+                    _subject.OnNext(topic);
+                }
+            }
+            catch (Exception e)
+            {
+                lock (_lock)
+                {
+                    Console.WriteLine(e.Message + "in analysis");
+                    _subject.OnError(e);
+                }
             }
             _subject.OnCompleted();
+
         }
 
         public void OnError(Exception error)
@@ -68,19 +78,12 @@ namespace Projekat3
         public async void OnNext(string value)
         {
             _postsGeathered = false;
-             var t=  GetPosts(value);
+            var t = GetPosts(value);
             _tasks.Add(t);
             await t;
-            if(_postsGeathered)
+            if (!_postsGeathered)
             {
-                //lock(_lock)
-                //{
-                //    Console.WriteLine($"{_title} posts geathered.\n");
-                //}
-            }
-            else
-            {
-                lock(_lock)
+                lock (_lock)
                 {
                     Console.WriteLine($"{_title} posts not geathered.\n");
                 }
@@ -100,13 +103,13 @@ namespace Projekat3
                 //}
                 GetComments(post);
                 _postsGeathered = true;
-                
+
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                lock(_lock)
+                lock (_lock)
                 {
-                    Console.WriteLine(e.Message+"when getting posts");
+                    Console.WriteLine(e.Message + "when getting posts");
                 }
                 _postsGeathered = false;
             }
@@ -115,21 +118,21 @@ namespace Projekat3
         {
             try
             {
-                var comments = post.Comments.GetNew(limit:100);
-                foreach(var comment in comments)
+                var comments = post.Comments.GetNew(limit: 100);
+                foreach (var comment in comments)
                 {
-                    lock(_lock)
+                    lock (_lock)
                     {
-                        Console.WriteLine($"Comment: {comment.Body}");
+                        //Console.WriteLine($"Comment: {comment.Body}");
                         _comments.Add(comment.Body);
                     }
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                lock(_lock)
+                lock (_lock)
                 {
-                    Console.WriteLine(e.Message+"when getting comments");
+                    Console.WriteLine(e.Message + "when getting comments");
                 }
             }
         }

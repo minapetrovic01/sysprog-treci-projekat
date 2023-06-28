@@ -16,7 +16,6 @@ namespace Projekat3
         private string _urlApi;
         private object _lockConsole = new object();
         private int _requestCount = 0;
-        private string _clientId = "";
         private string _clientSecret = "";
         private string _accessToken = "";
         private RedditAuth _redditAuth;
@@ -169,6 +168,7 @@ namespace Projekat3
         {
             lock(_lockConsole)
             {
+                Console.WriteLine("----------------------------------------------------");
                 Console.WriteLine("Request number: " + requestId);
                 Console.WriteLine("Request URL: " + request.Url.ToString());
                 Console.WriteLine("Request HTTP method: " + request.HttpMethod);
@@ -184,6 +184,7 @@ namespace Projekat3
         {
             lock (_lockConsole)
             {
+                Console.WriteLine("----------------------------------------------------");
                 Console.WriteLine("Response number: " + responseId);
                 Console.WriteLine("Response status code: " + response.StatusCode);
                 Console.WriteLine("Response status description: " + response.StatusDescription);
