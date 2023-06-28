@@ -46,10 +46,15 @@ namespace Projekat3
         private void DoTopicModeling()
         {
             Console.WriteLine($"Topic modeling for {_title} subreddit\n");
-            foreach(var comment in _comments)
+            ///LatentDirichletAllocation lda = new LatentDirichletAllocation();
+            LatentDirichletAllocation.ProccessData(_comments);
+            LatentDirichletAllocation.RunAnalysis(3);
+
+            foreach (var comment in _comments)
             {
-                Console.WriteLine(comment);
-                _subject.OnNext(comment);
+                //Console.WriteLine(comment);
+                string topic = LatentDirichletAllocation.GetPrediction(comment);
+                _subject.OnNext(topic);
 
             }
             _subject.OnCompleted();
