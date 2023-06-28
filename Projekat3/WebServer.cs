@@ -48,12 +48,6 @@ namespace Projekat3
                     {
                         HttpListenerContext context = await listener.GetContextAsync();
                         _= ProcessRequestAsync(context,_requestCount++);
-                        //string responseString = "<HTML><BODY> Hello world!</BODY></HTML>";
-                        //byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-                        //response.ContentLength64 = buffer.Length;
-                        //System.IO.Stream output = response.OutputStream;
-                        //output.Write(buffer, 0, buffer.Length);
-                        //output.Close();
                     }
                 }
             });
@@ -79,11 +73,11 @@ namespace Projekat3
                 }
 
 
+
+
+
                 //SendResponse(response, requestNumber, "OK");
 
-                
-
-                
             }
             catch(Exception e)
             {
